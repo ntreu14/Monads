@@ -4,6 +4,7 @@ import           Control.Monad.State
 import qualified Data.Array as A
 import qualified Data.Ix as I
 import           System.Random (StdGen, randomR, newStdGen)
+import Data.Set (empty)
 
 {- State Monad reference
 
@@ -30,10 +31,9 @@ data GameState = GameState
   }
 
 initialGameState :: StdGen -> GameState
-initialGameState gen = GameState
+initialGameState = GameState
   (A.array (head boardIndices, last boardIndices) [(i, Empty) | i <- boardIndices])
   XPlayer
-  gen
 
 nextPlayer :: Player -> Player
 nextPlayer XPlayer = OPlayer
@@ -49,20 +49,36 @@ tileForPlayer OPlayer = HasO
 -- You can't use the IO monad, so you have to make use of the
 -- stateful generator in the GameState!
 chooseRandomMove :: State GameState TileIndex
-chooseRandomMove = undefined
+chooseRandomMove = do 
+  game <- get
+  let spots = getSpots game
+  let gen = generator game
+  let (i, gen') = randomR (0, length spots - 1) gen
+  put $ game { generator = gen' }
+  pure $ spots !! i
+
+  where
+    getSpots game = [ fst pair | pair <- A.assocs (board game), snd pair == Empty]
 
 -- Given a selected tile, mark it for the "current" player!
 applyMove :: TileIndex -> State GameState ()
-applyMove i = undefined
+applyMove i = do
+  game <- get
+  let player = currentPlayer game
+  let newBoard = board game A.// [(i, tileForPlayer player)]
+  put $ game { currentPlayer = nextPlayer player, board = newBoard }
 
 -- The game is done when there are no more Empty tiles!
 isGameDone :: State GameState Bool
-isGameDone = undefined
+isGameDone = do
+  game <- get
+  let spots = [ fst pair | pair <- A.assocs (board game), snd pair == Empty]
+  pure $ null spots
 
 -- Combine your functions together for a function to complete a single turn!
 resolveTurn :: State GameState Bool
-resolveTurn = undefined
+resolveTurn = do
+  i <- chooseRandomMove
+  applyMove i
+  isGameDone
 
--- As an extra challenge, you can try to complete the game implementation!
-main :: IO ()
-main = undefined
