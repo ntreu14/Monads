@@ -1,6 +1,7 @@
 module MonadsBasic where
 
 import Data.Char
+import System.IO (NewlineMode(inputNL))
 
 {- Monad instances
 
@@ -47,19 +48,29 @@ runMaybeFuncs input = case maybeFunc1 input of
 
 -- TODO: Write the above function in one line using the >>= operator!
 runMaybeFuncsBind :: String -> Maybe [Int]
-runMaybeFuncsBind input = undefined
+runMaybeFuncsBind input =
+  maybeFunc1 input >>= maybeFunc2 >>= maybeFunc3
 
 -- TODO: Write the above function with "do" notation!
 runMaybeFuncsDo :: String -> Maybe [Int]
-runMaybeFuncsDo input = undefined
+runMaybeFuncsDo input = do
+  result1 <- maybeFunc1 input
+  result2 <- maybeFunc2 result1
+  maybeFunc3 result2
 
 -- TODO: How do we add "2" to the result of the first function?
 --       First try using "do" notation, then try using (>>=)
 runMaybeFuncsDo2 :: String -> Maybe [Int]
-runMaybeFuncsDo2 input = undefined
+runMaybeFuncsDo2 input = do
+  result1 <- maybeFunc1 input
+  result2 <- maybeFunc2 (result1 + 2)
+  maybeFunc3 result2
 
 runMaybeFuncsBind2 :: String -> Maybe [Int]
-runMaybeFuncsBind2 input = undefined
+runMaybeFuncsBind2 input = 
+  maybeFunc1 input 
+    >>= \result1 -> maybeFunc2 (result1 + 2) 
+    >>= maybeFunc3
 
 -- Using the Either monad
 eitherFunc1 :: String -> Either String Int
@@ -79,7 +90,10 @@ eitherFunc3 f = if f > 15.0
 -- TODO: Call the 3 functions above!
 --       Use do-notation or (>>=)
 runEitherFuncs :: String -> Either String [Int]
-runEitherFuncs input = undefined
+runEitherFuncs input = do
+  result1 <- eitherFunc1 input
+  result2 <- eitherFunc2 result1
+  eitherFunc3 result2
 
 -- Using a different error type is a **different monad**!
 data CustomError = CustomError
@@ -93,4 +107,6 @@ eitherFuncCustom = undefined
 --       getLine :: IO String
 --       print :: String -> IO ()
 main :: IO ()
-main = undefined
+main = do
+  input <- getLine
+  print $ map toUpper input
