@@ -51,10 +51,14 @@ main2 = do
 
 -- func1 and func2 shouldn't need the extra parameter anymore
 func1' :: Reader Environment String
-func1' = undefined
+func1' = do
+  r <- func2'
+  pure $ "Result" ++ show r
 
 func2' :: Reader Environment Int
-func2' = undefined
+func2' = do
+  env <- ask
+  pure $ 2 + floor (func3 env)
 
 -- Accumulation Functions
 
@@ -103,13 +107,40 @@ instance Monoid Int where
 
 -- TODO: Re-write these functions to use the Writer monad with the Int instance above!
 acc1' :: String -> (String, Int)
-acc1' input = undefined
+acc1' input
+  | even $ length input = runWriter (acc2' input)
+  | otherwise =
+    runWriter $ do
+      str1 <- acc3' $ tail input
+      str2 <- acc4' (take 1 input)
+      pure $ str1 ++ str2
 
 acc2' :: String -> Writer Int String
-acc2' input = undefined
+acc2' input 
+  | length input > 10 = do
+      tell 1
+      acc4' $ take 9 input
+
+  | otherwise = do
+      tell 10
+      pure input
 
 acc3' :: String -> Writer Int String
-acc3' input = undefined
+acc3' input 
+  | length input `mod` 3 == 0 = do
+      tell 3
+      acc2' $ input ++ "ab"
+
+  | otherwise = do
+      tell 1
+      pure $ tail input
 
 acc4' :: String -> Writer Int String
-acc4' input = undefined
+acc4' input
+  | length input < 10 = do
+      tell $ length input
+      pure $ input ++ input
+  
+  | otherwise = do
+      tell 5
+      pure $ take 5 input

@@ -54,7 +54,7 @@ data GovDirectory a = GovDirectory
 instance Functor GovDirectory where
   fmap f oldDirectory = GovDirectory {
     mayor = f (mayor oldDirectory),
-    interimMayor = Nothing, -- This isn't right!
+    interimMayor = f <$> interimMayor oldDirectory, -- This isn't right!
     cabinet = f <$> cabinet oldDirectory,
     councilMembers = f <$> councilMembers oldDirectory
   }
