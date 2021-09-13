@@ -5,6 +5,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Maybe
 import Data.Char (isUpper, isLower)
+import GHC.RTS.Flags (TraceFlags(user))
 
 main1 :: IO ()
 main1 = do
@@ -64,16 +65,42 @@ instance (Monad m) => Monad (MaybeT m) where
 
 -- TODO: Fill in these functions to work with "MaybeT"!
 readUserName' :: MaybeT IO String
-readUserName' = undefined
+readUserName' = MaybeT $ do
+  str <- getLine
+  if length str > 5 then
+    pure $ Just str
+  else
+    pure Nothing
 
 readEmail' :: MaybeT IO String
-readEmail' = undefined
+readEmail' = MaybeT $ do
+  print "Please enter email:"
+  str <- getLine
+  if length str > 5 then
+    pure $ Just str
+  else
+    pure Nothing
+
 
 readPassword' :: MaybeT IO String
-readPassword' = undefined
+readPassword' = MaybeT $ do
+  print "Please enter password:"
+  str <- getLine
+  if not (any isUpper str) || length str < 8 || not (any isLower str)
+    then pure Nothing
+    else pure $ Just str
 
 main2 :: IO ()
-main2 = undefined
+main2 = do
+  perhapsCreds <- runMaybeT $ do
+    user <- readUserName'
+    email <- readEmail'
+    password <- readPassword'
+    pure (user, email, password)
+  
+  case perhapsCreds of
+    Just (u, e, p) -> login u e p
+    Nothing -> print "can't login"
 
 -- Lifting
 
@@ -84,7 +111,17 @@ type Env = (Maybe String, Maybe String, Maybe String)
 -- If it is Nothing, then reading the input!
 -- You'll have to use a couple "lift"s!
 readUserName'' :: MaybeT (ReaderT Env IO) String
-readUserName'' = undefined
+readUserName'' = MaybeT $ do
+  (perhapsUserName, _, _) <- ask
+  case perhapsUserName of
+    Just str -> pure $ Just str
+    Nothing -> do
+      lift $ print "Enter username"
+      input <- lift getLine
+      if length input > 5 then
+        pure $ Just input
+      else 
+        pure Nothing
 
 -- These functions aren't necessary for the above example ^^
 type TripleMonad a = MaybeT (ReaderT Env IO) a
@@ -111,4 +148,19 @@ debugFunc input = liftIO $ putStrLn ("Successfully produced input: " ++ input)
 -- TODO: Re-write main2, but run 'debugFunc' each time you get a portion of
 --       the user's input!
 main3 :: IO ()
-main3 = undefined
+main3 = do
+  perhapsCreds <- runMaybeT $ do
+    user <- readUserName'
+    debugFunc user
+
+    email <- readEmail'
+    debugFunc email
+
+    password <- readPassword'
+    debugFunc password
+
+    pure (user, email, password)
+
+  case perhapsCreds of
+    Just (u, e, p) -> login u e p
+    Nothing -> print "can't login" 
