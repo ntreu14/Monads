@@ -51,9 +51,8 @@ instance Functor (Either a) where
 	fmap f (Right y) = Right (f y)
 -}
 
--- TODO: This function needs a type signature!
---       Make it as general as possible!
--- convertTupleFunctor = fmap personFromTuple
+convertTupleFunctor :: Functor f => f (String, String, Int) -> f Person
+convertTupleFunctor = fmap personFromTuple
 
 -- Making our own Functor
 
@@ -65,8 +64,12 @@ data GovDirectory a = GovDirectory {
 }
 
 instance Functor GovDirectory where
-  -- TODO: Write out this functor instance!
-  fmap f oldDirectory = undefined
+  fmap f oldDirectory = GovDirectory {
+    mayor = f (mayor oldDirectory)
+  , interimMayor = f <$> interimMayor oldDirectory
+  , cabinet = f <$> cabinet oldDirectory
+  , councilMembers = f <$> councilMembers oldDirectory
+  }
 
 oldDirectory :: GovDirectory (String, String, Int)
 oldDirectory = GovDirectory
@@ -82,4 +85,4 @@ oldDirectory = GovDirectory
 -- TODO: How can we do this in general terms, since we have
 --       a Functor instance?
 newDirectory :: GovDirectory Person
-newDirectory = undefined
+newDirectory = personFromTuple <$> oldDirectory
